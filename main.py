@@ -75,7 +75,7 @@ def save_to_file(filename, takeaways):
             file.write(f"- {takeaway}\n")
 
 # Path to your audio file
-audio_file_path = "/path/to/your/audiofile.m4a"
+audio_file_path = "/Users/rahuldey/Downloads/Paul Risotti.m4a"
 
 # Transcribe the audio file
 transcript = transcribe_audio(audio_file_path)
