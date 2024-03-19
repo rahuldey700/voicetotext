@@ -48,56 +48,43 @@ def transcribe_audio(file_path):
     result = model.transcribe(file_path)
     return result["text"]
 
-def extract_key_insights_and_quotes(transcript):
+def extract_key_takeaways(transcript, top_n=10):
     """
-    Extracts key insights and quotes from the transcript.
-    This is a heuristic approach that looks for sentences with quotation marks for quotes
-    and sentences that may signify insight based on certain keywords.
+    Extracts key takeaways from the transcript by identifying the most common nouns.
+    This is a very basic heuristic approach focusing on word frequency.
     """
-    # Split transcript into sentences
-    sentences = re.split(r'(?<=[.!?])\s+', transcript)
+    # Remove non-alphabetic characters for simplicity, keep spaces and apostrophes
+    clean_transcript = re.sub(r"[^a-zA-Z\s']", '', transcript)
+    words = clean_transcript.lower().split()
     
-    insights = []
-    quotes = []
+    # Count the frequency of each word
+    word_freq = Counter(words)
     
-    # Keywords that might indicate insightful sentences
-    insight_keywords = ['importantly', 'notably', 'key point', 'remember', 'highlight']
-    
-    for sentence in sentences:
-        # Check for direct quotes
-        if '"' in sentence or "“" in sentence or "‘" in sentence:
-            quotes.append(sentence)
-        # Check for sentences containing insight keywords
-        elif any(keyword in sentence.lower() for keyword in insight_keywords):
-            insights.append(sentence)
-    
-    return insights, quotes
+    # Identify the most common words as key takeaways (simple heuristic)
+    common_words = word_freq.most_common(top_n)
+    key_takeaways = [word for word, _ in common_words]
+    return key_takeaways
 
-def save_to_file(filename, insights, quotes):
+def save_to_file(filename, takeaways):
     """
-    Saves insights and quotes to a specified file.
+    Saves takeaways to a specified file.
     """
     with open(filename, 'w') as file:
-        file.write("Key Insights:\n")
-        for insight in insights:
-            file.write(f"- {insight}\n")
-        
-        file.write("\nKey Quotes:\n")
-        for quote in quotes:
-            file.write(f"- {quote}\n")
+        file.write("Key Takeaways:\n")
+        for takeaway in takeaways:
+            file.write(f"- {takeaway}\n")
 
-# Path to audio file
-audio_file_path = "/Users/rahuldey/Downloads/Paul Risotti.m4a"
+# Path to your audio file
+audio_file_path = "/path/to/your/audiofile.m4a"
 
 # Transcribe the audio file
 transcript = transcribe_audio(audio_file_path)
 
-# Extract key insights and quotes
-insights, quotes = extract_key_insights_and_quotes(transcript)
+# Extract key takeaways
+takeaways = extract_key_takeaways(transcript)
 
-# Save insights and quotes to a file
+# Save takeaways to a file
 output_filename = "output.txt"
-save_to_file(output_filename, insights, quotes)
+save_to_file(output_filename, takeaways)
 
-print(f"Transcription and analysis complete. Insights and quotes saved to {output_filename}.")
-
+print(f"Transcription and analysis complete. Key takeaways saved to {output_filename}.")
