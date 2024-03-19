@@ -37,54 +37,56 @@
 # print("Key Takeaways:", takeaways)
 
 import whisper
-import re
-from collections import Counter
 
 def transcribe_audio(file_path):
-    """
-    Transcribes the given audio file to text using Whisper.
-    """
     model = whisper.load_model("base")
     result = model.transcribe(file_path)
     return result["text"]
 
-def extract_key_takeaways(transcript, top_n=10):
-    """
-    Extracts key takeaways from the transcript by identifying the most common nouns.
-    This is a very basic heuristic approach focusing on word frequency.
-    """
-    # Remove non-alphabetic characters for simplicity, keep spaces and apostrophes
-    clean_transcript = re.sub(r"[^a-zA-Z\s']", '', transcript)
-    words = clean_transcript.lower().split()
-    
-    # Count the frequency of each word
-    word_freq = Counter(words)
-    
-    # Identify the most common words as key takeaways (simple heuristic)
-    common_words = word_freq.most_common(top_n)
-    key_takeaways = [word for word, _ in common_words]
-    return key_takeaways
-
-def save_to_file(filename, takeaways):
-    """
-    Saves takeaways to a specified file.
-    """
-    with open(filename, 'w') as file:
-        file.write("Key Takeaways:\n")
-        for takeaway in takeaways:
-            file.write(f"- {takeaway}\n")
-
-# Path to your audio file
 audio_file_path = "/Users/rahuldey/Downloads/Paul Risotti.m4a"
-
-# Transcribe the audio file
 transcript = transcribe_audio(audio_file_path)
+print("Transcript:", transcript) 
 
-# Extract key takeaways
-takeaways = extract_key_takeaways(transcript)
+from transformers import pipeline
 
-# Save takeaways to a file
-output_filename = "output.txt"
-save_to_file(output_filename, takeaways)
+def summarize_text(text):
+    summarizer = pipeline("summarization")
+    summary = summarizer(text, max_length=130, min_length=30, do_sample=False)
+    return summary[0]['summary_text']
 
-print(f"Transcription and analysis complete. Key takeaways saved to {output_filename}.")
+summary = summarize_text(transcript)
+
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+from collections import Counter
+
+nltk.download('punkt')
+nltk.download('stopwords')
+
+def extract_themes(text, top_n=5):
+    stop_words = set(stopwords.words('english'))
+    words = word_tokenize(text)
+    
+    # Filter out stop words and non-alphabetic words
+    filtered_words = [word for word in words if word.isalpha() and word not in stop_words]
+    
+    # Count and return the most common words
+    most_common_words = Counter(filtered_words).most_common(top_n)
+    return [word for word, _ in most_common_words]
+
+themes = extract_themes(transcript)
+
+def save_results(filename, transcript, summary, themes):
+    with open(filename, 'w') as file:
+        file.write("Transcription:\n\n")
+        file.write(transcript)
+        file.write("\n\nSummary:\n\n")
+        file.write(summary)
+        file.write("\n\nKey Themes:\n\n")
+        file.write('\n'.join(themes))
+
+output_filename = "analysis_output.txt"
+save_results(output_filename, transcript, summary, themes)
+
+print(f"Analysis complete. Results saved to {output_filename}.")
